@@ -1,6 +1,8 @@
 import os
 import struct
 import json
+from datetime import datetime
+
 
 class GIFExtractor:
     def __init__(self):
@@ -15,6 +17,15 @@ class GIFExtractor:
                     gif_files.append(os.path.join(folder, file))
         return gif_files
 
+    def get_file_dates(self, file_path):
+        creation_time = os.path.getctime(file_path)
+        modification_time = os.path.getmtime(file_path)
+
+        creation_date = datetime.fromtimestamp(creation_time).strftime('%Y-%m-%d %H:%M:%S')
+        modification_date = datetime.fromtimestamp(modification_time).strftime('%Y-%m-%d %H:%M:%S')
+
+        return creation_date, modification_date
+
     def read_gif_metadata(self, file_path):
         with open(file_path, 'rb') as file:
             header = file.read(6).decode('ascii')  # GIF87a o GIF89a
@@ -25,6 +36,8 @@ class GIFExtractor:
             background_color_index = struct.unpack('B', file.read(1))[0]
             pixel_aspect_ratio = struct.unpack('B', file.read(1))[0]
 
+            creation_date, modification_date = self.get_file_dates(file_path)
+
             metadata = {
                 "path": file_path,
                 "version": header,
@@ -34,6 +47,8 @@ class GIFExtractor:
                 "color_resolution": color_resolution,
                 "background_color_index": background_color_index,
                 "pixel_aspect_ratio": pixel_aspect_ratio,
+                "creation_date": creation_date,
+                "modification_date": modification_date
             }
             return metadata
 
