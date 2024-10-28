@@ -146,6 +146,33 @@ class GIFApp:
             for key, value in gif_info.items():
                 self.info_text.insert(END, f"{key}: {value}\n")
 
+    def open_edit_window(self):
+        if hasattr(self, 'current_index'):
+            gif_info = self.extractor.get_gif_info()[self.current_index]
+
+            self.edit_window = Toplevel(self.root)
+            self.edit_window.title("Editar Información")
+
+            self.entries = {}
+            row = 0
+            for key, value in gif_info.items():
+                Label(self.edit_window, text=key).grid(row=row, column=0)
+                entry = Entry(self.edit_window)
+                entry.insert(END, str(value))
+                entry.grid(row=row, column=1)
+                self.entries[key] = entry
+                row += 1
+
+            save_button = Button(self.edit_window, text="Guardar Cambios", command=self.save_changes)
+            save_button.grid(row=row, columnspan=2)
+
+    def save_changes(self):
+        updated_info = {key: entry.get() for key, entry in self.entries.items()}
+        self.extractor.update_gif_info(self.current_index, updated_info)
+        self.edit_window.destroy()
+        self.populate_gif_list() 
+        self.show_gif_info(None)  
+
 
 if __name__ == "__main__":
     root = Tk()
