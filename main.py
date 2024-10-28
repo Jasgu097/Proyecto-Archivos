@@ -1,6 +1,7 @@
 import os
 import struct
 import json
+from tkinter import Tk, filedialog, Button, Listbox, Text, END
 from datetime import datetime
 
 
@@ -20,7 +21,7 @@ class GIFExtractor:
     def get_file_dates(self, file_path):
         creation_time = os.path.getctime(file_path)
         modification_time = os.path.getmtime(file_path)
-
+        # Convertir timestamps a un formato legible
         creation_date = datetime.fromtimestamp(creation_time).strftime('%Y-%m-%d %H:%M:%S')
         modification_date = datetime.fromtimestamp(modification_time).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -35,7 +36,7 @@ class GIFExtractor:
             color_resolution = ((packed_byte[0] & 0b01110000) >> 4) + 1
             background_color_index = struct.unpack('B', file.read(1))[0]
             pixel_aspect_ratio = struct.unpack('B', file.read(1))[0]
-
+            # Obtener fechas de creación y modificación
             creation_date, modification_date = self.get_file_dates(file_path)
 
             metadata = {
@@ -70,3 +71,51 @@ class GIFExtractor:
 
     def get_gif_info(self):
         return self.gif_data
+
+
+class GIFApp:
+    def __init__(self, root, extractor):
+        self.root = root
+        self.extractor = extractor
+        self.extractor.load_metadata()
+
+        # Crear GUI
+        self.root.title("GIF Data Extractor")
+        self.select_button = Button(root, text="Seleccionar carpeta", command=self.select_folder)
+        self.select_button.pack()
+
+        self.gif_listbox = Listbox(root)
+        self.gif_listbox.pack(fill="both", expand=True)
+        self.gif_listbox.bind('<<ListboxSelect>>', self.show_gif_info)
+
+        self.info_text = Text(root)
+        self.info_text.pack(fill="both", expand=True)
+
+        self.populate_gif_list()
+
+    def select_folder(self):
+        folder_path = filedialog.askdirectory()
+        if folder_path:
+            self.extractor.add_gif_folder(folder_path)
+            self.populate_gif_list()
+
+    def populate_gif_list(self):
+        self.gif_listbox.delete(0, END)
+        for gif in self.extractor.get_gif_info():
+            self.gif_listbox.insert(END, gif["path"])
+
+    def show_gif_info(self, event):
+        selection = event.widget.curselection()
+        if selection:
+            index = selection[0]
+            gif_info = self.extractor.get_gif_info()[index]
+            self.info_text.delete("1.0", END)
+            for key, value in gif_info.items():
+                self.info_text.insert(END, f"{key}: {value}\n")
+
+
+if __name__ == "__main__":
+    root = Tk()
+    extractor = GIFExtractor()
+    app = GIFApp(root, extractor)
+    root.mainloop()
