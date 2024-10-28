@@ -4,7 +4,6 @@ import json
 from tkinter import Tk, filedialog, Button, Listbox, Text, END
 from datetime import datetime
 
-
 class GIFExtractor:
     def __init__(self):
         self.data_file = 'gif_data.json'
@@ -21,23 +20,25 @@ class GIFExtractor:
     def get_file_dates(self, file_path):
         creation_time = os.path.getctime(file_path)
         modification_time = os.path.getmtime(file_path)
-        # Convertir timestamps a un formato legible
         creation_date = datetime.fromtimestamp(creation_time).strftime('%Y-%m-%d %H:%M:%S')
         modification_date = datetime.fromtimestamp(modification_time).strftime('%Y-%m-%d %H:%M:%S')
-
         return creation_date, modification_date
 
     def read_gif_metadata(self, file_path):
         with open(file_path, 'rb') as file:
-            header = file.read(6).decode('ascii')  # GIF87a o GIF89a
+            header = file.read(6).decode('ascii')
             width, height = struct.unpack('<HH', file.read(4))
             packed_byte = file.read(1)
             has_gct = (packed_byte[0] & 0b10000000) != 0
             color_resolution = ((packed_byte[0] & 0b01110000) >> 4) + 1
             background_color_index = struct.unpack('B', file.read(1))[0]
             pixel_aspect_ratio = struct.unpack('B', file.read(1))[0]
-            # Obtener fechas de creación y modificación
+
+            color_count = 2 ** (color_resolution + 1) if has_gct else 0
             creation_date, modification_date = self.get_file_dates(file_path)
+            compression_type = "LZW"
+            numeric_format = "Little Endian"
+            image_count, comments = self.count_images_and_comments(file)
 
             metadata = {
                 "path": file_path,
@@ -48,10 +49,42 @@ class GIFExtractor:
                 "color_resolution": color_resolution,
                 "background_color_index": background_color_index,
                 "pixel_aspect_ratio": pixel_aspect_ratio,
+                "color_count": color_count,
                 "creation_date": creation_date,
-                "modification_date": modification_date
+                "modification_date": modification_date,
+                "compression_type": compression_type,
+                "numeric_format": numeric_format,
+                "image_count": image_count,
+                "comments": comments
             }
             return metadata
+
+    def count_images_and_comments(self, file):
+        image_count = 0
+        comments = []
+        file.seek(13)
+        while True:
+            block_id = file.read(1)
+            if block_id == b'\x2C':
+                image_count += 1
+                file.seek(9, 1)
+            elif block_id == b'\x21':
+                ext_type = file.read(1)
+                if ext_type == b'\xFE':
+                    comment = ""
+                    while True:
+                        block_size = ord(file.read(1))
+                        if block_size == 0:
+                            break
+                        comment += file.read(block_size).decode('ascii', errors='ignore')
+                    comments.append(comment)
+                else:
+                    file.seek(1, 1)
+            elif block_id == b'\x3B':
+                break
+            else:
+                break
+        return image_count, comments
 
     def save_metadata(self):
         with open(self.data_file, 'w') as file:
