@@ -41,21 +41,21 @@ class GIFExtractor:
             image_count, comments = self.count_images_and_comments(file)
 
             metadata = {
-                "path": file_path,
-                "version": header,
-                "width": width,
-                "height": height,
-                "has_global_color_table": has_gct,
-                "color_resolution": color_resolution,
-                "background_color_index": background_color_index,
-                "pixel_aspect_ratio": pixel_aspect_ratio,
-                "color_count": color_count,
-                "creation_date": creation_date,
-                "modification_date": modification_date,
-                "compression_type": compression_type,
-                "numeric_format": numeric_format,
-                "image_count": image_count,
-                "comments": comments
+                "Ruta": file_path,
+                "Version": header,
+                "Ancho": width,
+                "Altura": height,
+                "Tabla de color": has_gct,
+                "Resolucion del color": color_resolution,
+                "Indice de color de fondo": background_color_index,
+                "Relacion de aspecto de los pixeles": pixel_aspect_ratio,
+                "Contador de colores": color_count,
+                "Fecha de creacion": creation_date,
+                "Fecha de modificacion": modification_date,
+                "Tipo de compresion": compression_type,
+                "Formato numerioc": numeric_format,
+                "Cantidad de imagenes": image_count,
+                "Comentarios": comments
             }
             return metadata
 
