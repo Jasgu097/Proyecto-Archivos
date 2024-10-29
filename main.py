@@ -112,17 +112,35 @@ class GIFApp:
         self.extractor = extractor
         self.extractor.load_metadata()
 
-        # Crear GUI
-        self.root.title("GIF Data Extractor")
-        self.select_button = Button(root, text="Seleccionar carpeta", command=self.select_folder)
-        self.select_button.pack()
+        self.bg_color = "#2e2e2e"
+        self.fg_color = "#ffffff"
+        self.btn_bg_color = "#4a4a4a"
+        self.entry_bg_color = "#3a3a3a"
+        self.entry_fg_color = "#e0e0e0"
 
-        self.gif_listbox = Listbox(root)
-        self.gif_listbox.pack(fill="both", expand=True)
+        self.root.title("GIF Data Extractor")
+        self.root.configure(bg=self.bg_color)
+
+        self.select_button = Button(
+            root, text="Seleccionar carpeta", command=self.select_folder,
+            bg=self.btn_bg_color, fg=self.fg_color
+        )
+        self.select_button.pack(pady=5)
+
+        self.gif_listbox = Listbox(
+            root, bg=self.entry_bg_color, fg=self.entry_fg_color, selectbackground="#5c5c5c"
+        )
+        self.gif_listbox.pack(fill="both", expand=True, padx=5, pady=5)
         self.gif_listbox.bind('<<ListboxSelect>>', self.show_gif_info)
 
-        self.info_text = Text(root)
-        self.info_text.pack(fill="both", expand=True)
+        self.info_text = Text(root, bg=self.bg_color, fg=self.fg_color, wrap="word")
+        self.info_text.pack(fill="both", expand=True, padx=5, pady=5)
+
+        self.edit_button = Button(
+            root, text="Editar Información", command=self.open_edit_window,
+            bg=self.btn_bg_color, fg=self.fg_color
+        )
+        self.edit_button.pack(pady=5)
 
         self.populate_gif_list()
 
@@ -135,12 +153,13 @@ class GIFApp:
     def populate_gif_list(self):
         self.gif_listbox.delete(0, END)
         for gif in self.extractor.get_gif_info():
-            self.gif_listbox.insert(END, gif["path"])
+            self.gif_listbox.insert(END, gif["Ruta"])
 
     def show_gif_info(self, event):
         selection = event.widget.curselection()
         if selection:
             index = selection[0]
+            self.current_index = index
             gif_info = self.extractor.get_gif_info()[index]
             self.info_text.delete("1.0", END)
             for key, value in gif_info.items():
@@ -152,27 +171,30 @@ class GIFApp:
 
             self.edit_window = Toplevel(self.root)
             self.edit_window.title("Editar Información")
+            self.edit_window.configure(bg=self.bg_color)
 
             self.entries = {}
             row = 0
             for key, value in gif_info.items():
-                Label(self.edit_window, text=key).grid(row=row, column=0)
-                entry = Entry(self.edit_window)
+                Label(self.edit_window, text=key, bg=self.bg_color, fg=self.fg_color).grid(row=row, column=0)
+                entry = Entry(self.edit_window, bg=self.entry_bg_color, fg=self.entry_fg_color)
                 entry.insert(END, str(value))
-                entry.grid(row=row, column=1)
+                entry.grid(row=row, column=1, padx=5, pady=2)
                 self.entries[key] = entry
                 row += 1
 
-            save_button = Button(self.edit_window, text="Guardar Cambios", command=self.save_changes)
-            save_button.grid(row=row, columnspan=2)
+            save_button = Button(
+                self.edit_window, text="Guardar Cambios", command=self.save_changes,
+                bg=self.btn_bg_color, fg=self.fg_color
+            )
+            save_button.grid(row=row, columnspan=2, pady=5)
 
     def save_changes(self):
         updated_info = {key: entry.get() for key, entry in self.entries.items()}
         self.extractor.update_gif_info(self.current_index, updated_info)
         self.edit_window.destroy()
-        self.populate_gif_list() 
-        self.show_gif_info(None)  
-
+        self.populate_gif_list()
+        self.show_gif_info(None)
 
 if __name__ == "__main__":
     root = Tk()
